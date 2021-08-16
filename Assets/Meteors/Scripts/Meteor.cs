@@ -67,6 +67,7 @@ public class Meteor : MonoBehaviour, Ihittable
             _rigidbody2D.AddForce(initialForce, ForceMode2D.Impulse);
         }
         Size = size;
+        trailRenderer = GetComponent<TrailRenderer>();
         trailRenderer.widthMultiplier = size;
     }
 
