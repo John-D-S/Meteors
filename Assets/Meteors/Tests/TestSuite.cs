@@ -4,6 +4,8 @@ using NUnit.Framework;
 
 using System.Linq;
 
+using UnityEditor;
+
 using UnityEngine;
 using UnityEngine.TestTools;
 
@@ -12,32 +14,34 @@ public class TestSuite
 	private GameObject gameGameObject;
 	private Game game;
 	private Spawner spawner;
-	//private Player player;
 
 	[SetUp]
 	public void Setup()
 	{
-		// Makes the game as a GameObject = gameGameObject.
+		//instantiate the game
 		gameGameObject = MonoBehaviour.Instantiate(Resources.Load<GameObject>("Prefabs/Game"));
-		// Gets the GameManager, which is on the game.
+		//sets the game component.
 		game = gameGameObject.GetComponent<Game>();
-		// Gets the AsteroidSpawner, which is a GameObject in the children of the gameGameObject. 
+		//set the spawner component.
 		spawner = game.spawner;
+		//set spawning to false so that it doesn't spawn things automatically.
 		spawner.isSpawning = false;
-		// Gets the Player, which is a GameObject in the children of the gameGameObject. 
-		//player = gameGameObject.GetComponentInChildren<Player>();
 	}
 	
 	[TearDown]
 	public void Teardown()
 	{
-		// Destroy the game after the test so nothing is left in the scene.
-		Object.Destroy(game.gameObject);
+		//destroy everything in the scene
+		GameObject[] everything = GameObject.FindObjectsOfType<GameObject>();
+		foreach(GameObject thing in everything)
+		{
+			if(thing != null)
+			{
+				Object.Destroy(thing);
+			}
+		}
 	}
 	
-	/// <summary>
-	/// Passes if the meteors position is different 0.1 seconds after being spawned
-	/// </summary>
 	[UnityTest]
 	public IEnumerator MeteorsMove()
 	{
@@ -50,26 +54,33 @@ public class TestSuite
 		//pass if the meteor's posion has changed
 		Assert.AreNotEqual(meteor.transform.position, initialPos);
 	}
-
+	
 	[UnityTest]
 	public IEnumerator BigMeteorsSplit()
 	{
-		// Spawns one astroid as asteroid.
+		//spawn a meteor
 		GameObject meteor = spawner.SpawnMeteor(3);
-		// Get the Meteor's component.
+		//get the meteor's component.
 		Meteor meteorComponent = meteor.GetComponent<Meteor>();
+		//make sure the meteor has the meteor component
 		if(meteorComponent == null)
 		{
 			Assert.Null(meteorComponent);
 		}
 		else
 		{
+			//get the initial number of meteors and wait a bit
 			int initialnumberOfMeteors = Object.FindObjectsOfType<Meteor>().Length;
 			yield return new WaitForSeconds(0.5f);
+			//call the hit function of the meteor
 			meteorComponent.Hit();
+			//get all meteor components in the scene now that the meteor has been hit.
 			List<Meteor> newMeteorComponents = Object.FindObjectsOfType<Meteor>().ToList();
+			//count how many meteors there are
 			int newNumberOfMeteors = newMeteorComponents.Count;
+			//determine if there are more meteors than before
 			bool moreMeteorsThanBefore = newNumberOfMeteors > initialnumberOfMeteors;
+			//determine if any of the new meteors are the same as the old one
 			bool newMeteorsAreDifferent = false;
 			foreach(Meteor newMeteorComponent in newMeteorComponents)
 			{
@@ -78,18 +89,18 @@ public class TestSuite
 					newMeteorsAreDifferent = true;
 				}
 			}
+			//if there are more meteors than before and the meteors are different to the first meteor, the meteor has split.
 			bool meteorsHaveSplit = newMeteorsAreDifferent && moreMeteorsThanBefore;
-			Debug.Log($"original number = {initialnumberOfMeteors}, new number = {newNumberOfMeteors}");
-			UnityEngine.Assertions.Assert.IsTrue(moreMeteorsThanBefore);
+			UnityEngine.Assertions.Assert.IsTrue(meteorsHaveSplit);
 		}
 	}
 	
 	[UnityTest]
 	public IEnumerator SmallMeteorsDissappear()
 	{
-		// Spawns one astroid as asteroid.
+		//spawns one small meteor.
 		GameObject meteor = spawner.SpawnMeteor(1);
-		// Get the Meteor's component.
+		//get the meteor's component.
 		Meteor meteorComponent = meteor.GetComponent<Meteor>();
 		if(meteorComponent == null)
 		{
@@ -97,6 +108,7 @@ public class TestSuite
 		}
 		else
 		{
+			//hit the meteor and wait a bit
 			meteorComponent.Hit();
 			yield return new WaitForSeconds(0.5f);
 			//Assert.IsNull(meteor); does not work because a destroyed gameobject returns <null> instead of null.
@@ -108,11 +120,15 @@ public class TestSuite
 	[UnityTest]
 	public IEnumerator LifeLostWhenPlayerHit()
 	{
+		//get the amount of lives the player starts with
 		int originalLives = spawner.PlayerSpawns;
 		yield return new WaitForSeconds(0.1f);
+		//get the player
 		Player player = Object.FindObjectOfType<Player>();
+		//hit the player
 		player.Hit();
 		yield return new WaitForSeconds(0.1f);
+		//pass the test if the player lost a life
 		Assert.Less(spawner.PlayerSpawns, originalLives);
 	}
 
@@ -120,48 +136,23 @@ public class TestSuite
 	public IEnumerator LifeLostWhenGroundHit()
 	{
 		int originalLives = spawner.PlayerSpawns;
-		// Spawns a meteor.
+		//spawns a meteor.
 		GameObject meteor = spawner.SpawnMeteor(1);
-		// Get the meteor's component.
+		//get the meteor's component.
 		Meteor meteorComponent = meteor.GetComponent<Meteor>();
+		//check that the meteor component isn't null
 		if(meteorComponent == null)
 		{
 			Assert.IsNotNull(meteorComponent);
 		}
 		else
 		{
+			//hit the ground
 			meteorComponent.HitGround();
 			yield return new WaitForSeconds(0.5f);
+			//check that a life is lost
 			Assert.Less(spawner.PlayerSpawns, originalLives);
 		}
 	}
 	
-	/*[UnityTest]
-	public IEnumerator GameOverOccursOnAsteroidCollision()
-	{
-		// Get the current amount of lives.
-		int initialLives = game.lives;
-		// Spawns one astroid as asteroid.
-		GameObject asteroid = asteroidSpawner.SpawnOneAsteroid();
-		// Puts the asteroid ontop of the player.
-		asteroid.transform.position = player.gameObject.transform.position;
-		// Waits 0.1 Seconds, as yes this is a coroutine.
-		yield return new WaitForSeconds(0.1f);
-		// Checks if the player has lost lives.
-		Assert.Less(game.lives, initialLives);
-	}
-	
-	[UnityTest]
-	public IEnumerator NewGameRestartsGame()
-	{
-		// Makes the isGameOver true.
-		game.isGameOver = true;
-		// Runs the UIElements 'new game'.
-		game.NewGame();
-		// Checks if the game over is still true.
-		Assert.False(game.isGameOver);
-		// Returns after done.
-		yield return null;
-	}
-	*/
 }
