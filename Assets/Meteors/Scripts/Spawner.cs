@@ -81,9 +81,10 @@ public class Spawner : MonoBehaviour
 
     public GameObject SpawnMeteor(int size)
     {
+        Quaternion newMeteorRotation = Quaternion.Euler(0, 0, Random.Range(0f, 360f)); 
         GameObject instantiatedMeteor = Instantiate(meteor,
             Vector3.up * meteorSpawnHeight + Vector3.right * Random.Range(-levelWidth, levelWidth),
-            Quaternion.identity);
+            newMeteorRotation);
         Meteor instantiatedMeteorComponent = instantiatedMeteor.GetComponent<Meteor>();
         if (instantiatedMeteorComponent)
         {

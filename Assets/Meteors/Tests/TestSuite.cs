@@ -9,6 +9,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
 
+
 public class TestSuite
 {
 	private GameObject gameGameObject;

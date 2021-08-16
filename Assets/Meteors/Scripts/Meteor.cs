@@ -5,6 +5,8 @@ using System.Drawing;
 using Unity.Mathematics;
 using UnityEngine;
 
+using Random = UnityEngine.Random;
+
 [RequireComponent(typeof(Rigidbody2D))]
 public class Meteor : MonoBehaviour, Ihittable
 {
@@ -13,6 +15,8 @@ public class Meteor : MonoBehaviour, Ihittable
     public float sizeMultiplier = 2;
     public int size = 1;
     [SerializeField] private int splitAmount;
+    private TrailRenderer trailRenderer;
+    
     public int Size
     {
         set
@@ -63,6 +67,7 @@ public class Meteor : MonoBehaviour, Ihittable
             _rigidbody2D.AddForce(initialForce, ForceMode2D.Impulse);
         }
         Size = size;
+        trailRenderer.widthMultiplier = size;
     }
 
     public void Hit()
@@ -75,7 +80,8 @@ public class Meteor : MonoBehaviour, Ihittable
             for (int i = 0; i < splitAmount; i++)
             {
                 Vector2 newMeteorOffset = Quaternion.Euler(0, 0, instantiationAngleDifference * i) * movementDirection * Size;
-                newMeteors.Add(Instantiate(gameObject, transform.position + (Vector3)newMeteorOffset,quaternion.identity));
+                Quaternion newMeteorRotation = Quaternion.Euler(0, 0, Random.Range(0f, 360f)); 
+                newMeteors.Add(Instantiate(gameObject, transform.position + (Vector3)newMeteorOffset,newMeteorRotation));
                 Meteor newMeteorComponent = newMeteors[i].GetComponent<Meteor>();
                 if (newMeteorComponent != null)
                 {
