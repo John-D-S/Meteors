@@ -20,6 +20,8 @@ public class Spawner : MonoBehaviour
     [SerializeField] private Vector2 playerSpawnPosition;
     [SerializeField] private GameObject Player;
     [SerializeField] private int playerSpawns = 3;
+
+    public bool isSpawning = true;
     public int PlayerSpawns
     {
         set
@@ -77,19 +79,26 @@ public class Spawner : MonoBehaviour
         scoreDisplay.text = $"Score: {score}";
     }
 
+    public GameObject SpawnMeteor(int size)
+    {
+        GameObject instantiatedMeteor = Instantiate(meteor,
+            Vector3.up * meteorSpawnHeight + Vector3.right * Random.Range(-levelWidth, levelWidth),
+            Quaternion.identity);
+        Meteor instantiatedMeteorComponent = instantiatedMeteor.GetComponent<Meteor>();
+        if (instantiatedMeteorComponent)
+        {
+            instantiatedMeteorComponent.Size = size;
+            instantiatedMeteorComponent.spawner = this;
+        }
+        return instantiatedMeteor;
+    }
+    
     public IEnumerator SpawnMeteors()
     {
-        while (true)
+        yield return new WaitForSeconds(1);
+        while (true && isSpawning)
         {
-            GameObject instantiatedMeteor = Instantiate(meteor,
-                Vector3.up * meteorSpawnHeight + Vector3.right * Random.Range(-levelWidth, levelWidth),
-                Quaternion.identity);
-            Meteor instantiatedMeteorComponent = instantiatedMeteor.GetComponent<Meteor>();
-            if (instantiatedMeteorComponent)
-            {
-                instantiatedMeteorComponent.Size = Random.Range(1, maxMeteorSize);
-                instantiatedMeteorComponent.spawner = this;
-            }
+            SpawnMeteor(Random.Range(1, maxMeteorSize));
             yield return new WaitForSeconds(secondsBetweenMeteorSpawning);
         }
     }

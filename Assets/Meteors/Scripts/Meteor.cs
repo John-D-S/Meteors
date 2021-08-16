@@ -17,7 +17,7 @@ public class Meteor : MonoBehaviour, Ihittable
     {
         set
         {
-            transform.localScale = Vector3.one * value * sizeMultiplier;
+            transform.localScale = Vector3.one * (value * sizeMultiplier);
             size = value;
         }
         get
@@ -41,12 +41,17 @@ public class Meteor : MonoBehaviour, Ihittable
         Size = size;
     }
 
+    public void HitGround()
+    {
+        spawner.PlayerSpawns -= 1;
+        Destroy(gameObject);
+    }
+    
     private void OnCollisionStay2D(Collision2D other)
     {
         if (other.gameObject.CompareTag("Ground"))
         {
-            spawner.PlayerSpawns -= 1;
-            Destroy(gameObject);
+            HitGround();
         }
     }
 
@@ -66,11 +71,10 @@ public class Meteor : MonoBehaviour, Ihittable
         {
             float instantiationAngleDifference = 360 / splitAmount;
             Vector2 movementDirection = _rigidbody2D.velocity.normalized;
-            float currentInstantiationAngle = 0;
             List<GameObject> newMeteors = new List<GameObject>();
             for (int i = 0; i < splitAmount; i++)
             {
-                Vector2 newMeteorOffset = Quaternion.Euler(0, 0, instantiationAngleDifference * i) * movementDirection;
+                Vector2 newMeteorOffset = Quaternion.Euler(0, 0, instantiationAngleDifference * i) * movementDirection * Size;
                 newMeteors.Add(Instantiate(gameObject, transform.position + (Vector3)newMeteorOffset,quaternion.identity));
                 Meteor newMeteorComponent = newMeteors[i].GetComponent<Meteor>();
                 if (newMeteorComponent != null)
@@ -79,7 +83,6 @@ public class Meteor : MonoBehaviour, Ihittable
                     newMeteorComponent.initialForce = newMeteorOffset;
                 }
             }
-            
         }
         spawner.AddToScore(ScoreValue);
         Destroy(gameObject);
